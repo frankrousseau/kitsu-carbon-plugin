@@ -1,5 +1,8 @@
 # Carbon Tracking Plugin - Specifications
 
+See [KITSU_PLUGIN_GUIDE.md](./KITSU_PLUGIN_GUIDE.md) for generic Kitsu plugin conventions.
+See [FRONTEND_SPECS.md](./FRONTEND_SPECS.md) for frontend specifications.
+
 ## Overview
 
 A Kitsu plugin to track carbon consumption of productions based on artist work time and location-based emission factors.
@@ -138,17 +141,6 @@ CO2 = SUM(time_spent.duration * carbon_factor.workbench_co2e)
 
 ## Architecture
 
-### Files
-
-| File | Purpose |
-|------|---------|
-| `manifest.toml` | Plugin metadata |
-| `models.py` | CarbonFactor SQLAlchemy model |
-| `services.py` | Efficient SQLAlchemy queries |
-| `resources.py` | Flask-RESTful API endpoints |
-| `__init__.py` | Routes and lifecycle hooks |
-| `migrations/` | Alembic database migrations |
-
 ### Query Strategy
 
 Uses efficient SQLAlchemy JOINs instead of N+1 queries:
@@ -159,69 +151,11 @@ TimeSpent → Task → TaskType → Entity → Sequence/Episode → Person → C
 
 Single query per endpoint, aggregation done in Python.
 
-## Dependencies
-
-Relies on Zou models:
-- `TimeSpent` - work time entries
-- `Task` - tasks with entity and task_type references
-- `Entity` - shots, sequences, episodes, assets
-- `EntityType` - asset types
-- `TaskType` - task type definitions
-- `Person` - artist info (requires `country` field or `data.country`)
-
-## Installation
-
-```bash
-zou install-plugin /path/to/carbon
-```
-
-This will:
-1. Run the Alembic migration to create `plugin_carbon_factors` table
-2. Seed initial carbon factor data for 23 countries via `post_install` hook
-
 ## Pre-seeded Countries
 
 AU, BE, BR, CA, CN, DE, DK, ES, FI, FR, GB, IN, IT, JP, KR, MX, NL, NO, NZ, PL, SE, US, ZA
 
-## Testing
-
-### Running Tests
-
-**Requirements:**
-- `zou` must be installed with test utilities exposed (`zou.tests.base`)
-- Plugin must be installed: `pip install -e .`
-
-```bash
-cd /path/to/plugins/carbon
-
-# Run all tests
-pytest tests/ -v
-
-# Run only service tests
-pytest tests/test_services.py -v
-
-# Run only resource/API tests
-pytest tests/test_resources.py -v
-
-# Run a specific test class
-pytest tests/test_services.py::SequenceFootprintTestCase -v
-```
-
-**Note:** Tests depend on `zou.tests.base.ApiDBTestCase`. If zou doesn't package its test utilities, zou may need to expose them via:
-- Adding `tests` to `packages` in `setup.py`
-- Or creating a separate `zou-test-utils` package
-
-### Test Structure
-
-```
-tests/
-├── __init__.py
-├── conftest.py          # Fixtures and helpers
-├── test_services.py     # Service layer tests
-└── test_resources.py    # API endpoint tests
-```
-
-### Test Cases
+## Test Cases
 
 **Service Tests (`test_services.py`):**
 - `SequenceFootprintTestCase` - Tests for sequence footprint computation
@@ -237,11 +171,3 @@ tests/
 - `EpisodeFootprintResourceTestCase` - Tests for episode footprint API
 - `SummaryFootprintResourceTestCase` - Tests for summary API
 - `AccessControlTestCase` - Tests for authentication/authorization
-
-### Test Data Setup
-
-Tests use Zou's `ApiDBTestCase` base class which provides:
-- Automatic database setup/teardown with transactions
-- Fixture generators (`generate_fixture_project()`, `generate_fixture_task()`, etc.)
-- Authentication helpers (`log_in_admin()`, `log_in_cg_artist()`)
-- HTTP method helpers (`get()`, `post()`, `put()`, `delete()`)
