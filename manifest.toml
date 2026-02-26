@@ -5,6 +5,7 @@ version = "0.1.0"
 maintainer = "CGWire <contact@cg-wire.com>"
 website = "cg-wire.com/kitsu"
 license = "AGPL-3.0-only"
+icon = "leaf"
 frontend_project_enabled = true
 frontend_studio_enabled = true
 maintainer_name = "CGWire"

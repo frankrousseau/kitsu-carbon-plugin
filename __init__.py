@@ -28,31 +28,10 @@ routes = [
 ]
 
 
-def pre_install(manifest):
-    """
-    Pre install the plugin.
-    """
-    pass
-
-
 def post_install(manifest):
     """
-    Post install the plugin. Seeds initial carbon factor data.
+    Seed initial carbon factor data for 23 countries.
     """
     from .models import CarbonFactor
 
     CarbonFactor.seed_initial_data()
-
-
-def pre_uninstall(manifest):
-    """
-    Pre uninstall the plugin.
-    """
-    pass
-
-
-def post_uninstall(manifest):
-    """
-    Post uninstall the plugin.
-    """
-    pass

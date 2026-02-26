@@ -52,9 +52,9 @@ class CarbonFactor(db.Model, BaseMixin, SerializerMixin):
         Seed the database with initial carbon factor data for 23 countries.
         """
         for code, name, rendering, workbench in CARBON_FACTORS_DATA:
-            existing = db.session.query(cls).filter_by(
-                country_code=code
-            ).first()
+            existing = (
+                db.session.query(cls).filter_by(country_code=code).first()
+            )
             if not existing:
                 factor = cls(
                     country_code=code,
