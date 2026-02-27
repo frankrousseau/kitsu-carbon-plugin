@@ -13,12 +13,16 @@ A Kitsu plugin to track carbon consumption of productions based on artist work t
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `country_code` | String(2), PK | ISO 3166-1 alpha-2 code |
+| `id` | UUID, PK | Auto-generated UUID (from BaseMixin) |
+| `country_code` | String(2), unique | ISO 3166-1 alpha-2 code |
 | `country_name` | String(80) | Country name |
 | `rendering_co2e` | Float | g CO2e per hour for rendering |
 | `workbench_co2e` | Float | g CO2e per hour for workbench |
 
 Pre-populated with 23 countries on install.
+
+The model provides a `present()` method returning the serialized dict.
+`seed_initial_data()` uses BaseMixin helpers (`get_by`, `create_no_commit`, `commit`).
 
 ## API Endpoints
 

@@ -1,20 +1,12 @@
 # Carbon Tracking Plugin - Frontend Specifications
 
-## Technology Stack
+See [KITSU_PLUGIN_GUIDE.md](./KITSU_PLUGIN_GUIDE.md) for technology stack, code style, color palette, and Vite dev proxy conventions.
 
-- Vue 3 (Composition API with `<script setup>`)
-- Pinia (state management)
-- Vite (build tool)
-- Lucide Vue Next (icons)
-
-## Code Style
-
-- ESLint + Prettier using the same config as [Kitsu](https://github.com/cgwire/kitsu/blob/main/eslint.config.js)
-- Run `npm run lint` to lint and auto-fix
+Additional dependency: Lucide Vue Next (icons).
 
 ## Pinia Store (`stores/main.js`)
 
-Central store fetching data from the main Zou API.
+Central store using the options API (`state` + `actions`) fetching data from the main Zou API.
 
 **State:**
 - `taskTypes` — all task types from `GET /api/data/task-types`
@@ -67,9 +59,29 @@ Displayed when `production_id` query parameter is set.
 - Task type columns sourced from `store.taskTypes` (falls back to carbon API data)
 - Empty columns (all zero values) are hidden
 
+### Shared Components & Composable
+
+Duplicated UI elements are extracted into reusable sub-components:
+
+| Component | Purpose |
+|-----------|---------|
+| `FootprintHeader.vue` | Page header with title, subtitle, unit toggle, and info button |
+| `StatCards.vue` | 3-column stat cards (total emissions, weekly average, man-days) |
+| `ViewTabs.vue` | Matrix / breakdown tab switcher |
+| `ImpactLegend.vue` | Color legend (low / medium / high impact) |
+| `InfoModal.vue` | Calculation explanation modal |
+| `UnitToggle.vue` | kg/t unit toggle (`v-model`) |
+
+Shared logic lives in `composables/useCarbon.js`:
+- Shared state: `unit`, `activeTab`, `showInfo` (with localStorage persistence)
+- Formatting: `formatValue`, `formatValueOrDash`, `formatNumber`
+- Impact helpers: `getImpactClass`, `getBarWidth`, `getPercent`
+- Task type styling: `getTaskTypeColor`, `taskTypeHeaderStyle`, `taskTypeCellStyle`
+- Escape key handler for modal dismissal
+
 ### Router (`CarbonFootprint.vue`)
 
-- Reads `production_id` and `episode_id` from route query params
+- Reads `production_id` from route query params
 - Calls `store.init()` on mount
 - Watches `productionId` and calls `store.setCurrentProduction()`
 - Renders `ProductionFootprint` or `StudioFootprint` based on `production_id` presence
@@ -96,42 +108,10 @@ Work Time  x  People  x  Carbon Factor
 | Cloud | Cloud & Infra |
 | TrainFront | Commute |
 
-## Color Palette
-
-| Element | Color |
-|---------|-------|
-| Page background | `#36393f` |
-| Card / square background | `#202225` |
-| Accent border / mid-tone | `#2f3136` |
-| Interactive element background | `#42464e` |
-| Green (lowest impact, active tab, highlights) | `#00aa3c` |
-| Orange (medium impact) | `#fb923c` |
-| Red (highest impact) | `#ff5252` |
-
-## Unit Toggle
-
-- Container: `#202225` background, `3px solid #202225` border, rounded
-- Unselected button: transparent background, `#888` text
-- Selected button: `#42464e` background, white text, rounded corners
-
 ## Persistence
 
 - Unit preference saved to `localStorage` key `carbon-unit`
 - Active tab saved to `localStorage` key `carbon-tab`
-
-## Vite Dev Proxy
-
-```js
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:5000',
-      changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, '')
-    }
-  }
-}
-```
 
 ## Frontend Files
 
@@ -139,8 +119,15 @@ server: {
 |------|---------|
 | `frontend/src/main.js` | App entry, registers Pinia + Router |
 | `frontend/src/router.js` | Vue Router with hash history + query param transfer |
-| `frontend/src/stores/main.js` | Pinia store (Zou API data) |
+| `frontend/src/stores/main.js` | Pinia store (Zou API data, options API) |
+| `frontend/src/composables/useCarbon.js` | Shared state, formatting, and helpers |
 | `frontend/src/components/CarbonFootprint.vue` | Router component |
 | `frontend/src/components/StudioFootprint.vue` | Studio-wide view |
 | `frontend/src/components/ProductionFootprint.vue` | Per-production view |
+| `frontend/src/components/FootprintHeader.vue` | Shared page header |
+| `frontend/src/components/StatCards.vue` | Shared stat cards |
+| `frontend/src/components/ViewTabs.vue` | Shared tab switcher |
+| `frontend/src/components/ImpactLegend.vue` | Shared impact legend |
+| `frontend/src/components/InfoModal.vue` | Shared calculation modal |
+| `frontend/src/components/UnitToggle.vue` | Shared unit toggle |
 | `frontend/vite.config.js` | Vite config with dev proxy |

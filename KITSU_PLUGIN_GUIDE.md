@@ -198,7 +198,25 @@ Plugins can fetch data from the main Zou API. Common endpoints:
 ### Code Style
 
 - **Backend**: [Black](https://black.readthedocs.io/) formatter with `--line-length 80`
-- **Frontend**: ESLint + Prettier using [Kitsu's ESLint config](https://github.com/cgwire/kitsu/blob/main/eslint.config.js) — run `npm run lint`
+- **Frontend**:
+  - ESLint + Prettier using [Kitsu's ESLint config](https://github.com/cgwire/kitsu/blob/main/eslint.config.js) — run `npm run lint`
+  - Prettier: no semicolons, single quotes, no trailing commas (`.prettierrc`)
+  - Use arrow functions (`const fn = () => {}`) in composables and components
+  - CSS properties alphabetically ordered within each rule
+  - Pinia stores use the options API (`state` + `actions`)
+  - Extract shared UI into sub-components when logic/template is duplicated across views
+
+### Color Palette
+
+| Element | Color |
+|---------|-------|
+| Page background | `#36393f` |
+| Card / square background | `#202225` |
+| Accent border / mid-tone | `#2f3136` |
+| Interactive element background | `#42464e` |
+| Green (lowest impact, active tab, highlights) | `#00aa3c` |
+| Orange (medium impact) | `#fb923c` |
+| Red (highest impact) | `#ff5252` |
 
 ### Build
 
