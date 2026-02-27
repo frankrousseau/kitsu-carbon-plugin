@@ -1,130 +1,116 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
+import { defineStore } from 'pinia'
 
-export const useMainStore = defineStore("main", () => {
-  const taskTypes = ref([]);
-  const openProductions = ref([]);
-  const sequences = ref([]);
-  const episodes = ref([]);
-  const assetTypes = ref([]);
+export const useMainStore = defineStore('main', {
+  state: () => ({
+    taskTypes: [],
+    openProductions: [],
+    sequences: [],
+    episodes: [],
+    assetTypes: []
+  }),
 
-  async function fetchTaskTypes() {
-    try {
-      const response = await fetch("/api/data/task-types");
-      if (response.ok) {
-        taskTypes.value = await response.json();
+  actions: {
+    async fetchTaskTypes() {
+      try {
+        const response = await fetch('/api/data/task-types')
+        if (response.ok) {
+          this.taskTypes = await response.json()
+        }
+      } catch (err) {
+        console.error('Failed to fetch task types:', err)
       }
-    } catch (err) {
-      console.error("Failed to fetch task types:", err);
-    }
-  }
+    },
 
-  async function fetchOpenProductions() {
-    try {
-      const response = await fetch("/api/data/projects/open");
-      if (response.ok) {
-        openProductions.value = await response.json();
+    async fetchOpenProductions() {
+      try {
+        const response = await fetch('/api/data/projects/open')
+        if (response.ok) {
+          this.openProductions = await response.json()
+        }
+      } catch (err) {
+        console.error('Failed to fetch open productions:', err)
       }
-    } catch (err) {
-      console.error("Failed to fetch open productions:", err);
-    }
-  }
+    },
 
-  async function fetchSequences(productionId) {
-    try {
-      const response = await fetch(
-        `/api/data/projects/${productionId}/sequences`,
-      );
-      if (response.ok) {
-        sequences.value = await response.json();
+    async fetchSequences(productionId) {
+      try {
+        const response = await fetch(
+          `/api/data/projects/${productionId}/sequences`
+        )
+        if (response.ok) {
+          this.sequences = await response.json()
+        }
+      } catch (err) {
+        console.error('Failed to fetch sequences:', err)
       }
-    } catch (err) {
-      console.error("Failed to fetch sequences:", err);
-    }
-  }
+    },
 
-  async function fetchEpisodes(productionId) {
-    try {
-      const response = await fetch(
-        `/api/data/projects/${productionId}/episodes`,
-      );
-      if (response.ok) {
-        episodes.value = await response.json();
+    async fetchEpisodes(productionId) {
+      try {
+        const response = await fetch(
+          `/api/data/projects/${productionId}/episodes`
+        )
+        if (response.ok) {
+          this.episodes = await response.json()
+        }
+      } catch (err) {
+        console.error('Failed to fetch episodes:', err)
       }
-    } catch (err) {
-      console.error("Failed to fetch episodes:", err);
-    }
-  }
+    },
 
-  async function fetchAssetTypes(productionId) {
-    try {
-      const response = await fetch(
-        `/api/data/projects/${productionId}/asset-types`,
-      );
-      if (response.ok) {
-        assetTypes.value = await response.json();
+    async fetchAssetTypes(productionId) {
+      try {
+        const response = await fetch(
+          `/api/data/projects/${productionId}/asset-types`
+        )
+        if (response.ok) {
+          this.assetTypes = await response.json()
+        }
+      } catch (err) {
+        console.error('Failed to fetch asset types:', err)
       }
-    } catch (err) {
-      console.error("Failed to fetch asset types:", err);
+    },
+
+    async init() {
+      try {
+        await Promise.all([this.fetchTaskTypes(), this.fetchOpenProductions()])
+      } catch (err) {
+        console.error('Failed to initialize store:', err)
+      }
+    },
+
+    async setCurrentProduction(productionId) {
+      if (!productionId) {
+        this.sequences = []
+        this.episodes = []
+        this.assetTypes = []
+        return
+      }
+
+      const production = this.openProductions.find((p) => p.id === productionId)
+      if (!production) {
+        console.warn(`Production ${productionId} not found in open productions`)
+        this.sequences = []
+        this.episodes = []
+        this.assetTypes = []
+        return
+      }
+
+      const isTVShow = production.production_type === 'tvshow'
+
+      if (isTVShow) {
+        this.sequences = []
+        await Promise.all([
+          this.fetchEpisodes(productionId),
+          this.fetchAssetTypes(productionId)
+        ])
+      } else {
+        this.episodes = []
+        await Promise.all([
+          this.fetchSequences(productionId),
+          this.fetchAssetTypes(productionId)
+        ])
+      }
     }
   }
-
-  async function init() {
-    try {
-      await Promise.all([fetchTaskTypes(), fetchOpenProductions()]);
-    } catch (err) {
-      console.error("Failed to initialize store:", err);
-    }
-  }
-
-  async function setCurrentProduction(productionId) {
-    if (!productionId) {
-      sequences.value = [];
-      episodes.value = [];
-      assetTypes.value = [];
-      return;
-    }
-
-    const production = openProductions.value.find(
-      (p) => p.id === productionId,
-    );
-    if (!production) {
-      console.warn(`Production ${productionId} not found in open productions`);
-      sequences.value = [];
-      episodes.value = [];
-      assetTypes.value = [];
-      return;
-    }
-
-    const isTVShow = production.production_type === "tvshow";
-
-    if (isTVShow) {
-      sequences.value = [];
-      await Promise.all([
-        fetchEpisodes(productionId),
-        fetchAssetTypes(productionId),
-      ]);
-    } else {
-      episodes.value = [];
-      await Promise.all([
-        fetchSequences(productionId),
-        fetchAssetTypes(productionId),
-      ]);
-    }
-  }
-
-  return {
-    taskTypes,
-    openProductions,
-    sequences,
-    episodes,
-    assetTypes,
-    fetchTaskTypes,
-    fetchOpenProductions,
-    fetchSequences,
-    fetchEpisodes,
-    fetchAssetTypes,
-    init,
-    setCurrentProduction,
-  };
-});
+})

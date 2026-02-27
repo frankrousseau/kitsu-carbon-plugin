@@ -4,22 +4,22 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
-import { useMainStore } from "../stores/main";
-import ProductionFootprint from "./ProductionFootprint.vue";
-import StudioFootprint from "./StudioFootprint.vue";
+import { computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useMainStore } from '../stores/main'
+import ProductionFootprint from './ProductionFootprint.vue'
+import StudioFootprint from './StudioFootprint.vue'
 
-const route = useRoute();
-const store = useMainStore();
+const route = useRoute()
+const store = useMainStore()
 
-const productionId = computed(() => route.query.production_id || null);
+const productionId = computed(() => route.query.production_id || null)
 
 onMounted(() => {
-  store.init();
-});
+  store.init()
+})
 
 watch(productionId, (id) => {
-  store.setCurrentProduction(id);
-});
+  store.setCurrentProduction(id)
+})
 </script>
