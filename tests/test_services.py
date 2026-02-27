@@ -12,7 +12,6 @@ from zou.utils.test_helpers import ApiDBTestCase
 
 from sqlalchemy.orm.attributes import flag_modified
 
-from zou.app import db
 from zou.app.models.person import Person
 from zou.app.services import tasks_service
 
@@ -59,23 +58,22 @@ class CarbonServicesTestCase(ApiDBTestCase):
             ("DE", "Germany", 80.0, 50.0),
         ]
         for code, name, rendering, workbench in factors_data:
-            factor = CarbonFactor(
+            CarbonFactor.create_no_commit(
                 country_code=code,
                 country_name=name,
                 rendering_co2e=rendering,
                 workbench_co2e=workbench,
             )
-            db.session.add(factor)
-        db.session.commit()
+        CarbonFactor.commit()
 
     def _set_person_country(self, person_id, country_code):
-        person = Person.query.get(person_id)
+        person = Person.get(person_id)
         if person:
             if person.data is None:
                 person.data = {}
             person.data["country"] = country_code
             flag_modified(person, "data")
-            db.session.commit()
+            Person.commit()
 
     def _create_time_spent(self, task_id, person_id, date, duration):
         return tasks_service.create_or_update_time_spent(
@@ -308,7 +306,7 @@ class EpisodeFootprintTestCase(CarbonServicesTestCase):
 class CarbonFactorModelTestCase(CarbonServicesTestCase):
 
     def test_carbon_factors_created(self):
-        factor = CarbonFactor.query.filter_by(country_code="FR").first()
+        factor = CarbonFactor.get_by(country_code="FR")
 
         self.assertIsNotNone(factor)
         self.assertEqual(factor.country_name, "France")
@@ -316,12 +314,12 @@ class CarbonFactorModelTestCase(CarbonServicesTestCase):
         self.assertEqual(factor.workbench_co2e, 10.0)
 
     def test_seed_does_not_duplicate(self):
-        initial_count = CarbonFactor.query.count()
+        initial_count = len(CarbonFactor.get_all())
 
         CarbonFactor.seed_initial_data()
 
-        final_count = CarbonFactor.query.count()
+        final_count = len(CarbonFactor.get_all())
         self.assertGreaterEqual(final_count, initial_count)
 
-        factor = CarbonFactor.query.filter_by(country_code="FR").first()
+        factor = CarbonFactor.get_by(country_code="FR")
         self.assertIsNotNone(factor)

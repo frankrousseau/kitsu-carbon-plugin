@@ -12,7 +12,6 @@ from zou.utils.test_helpers import ApiDBTestCase
 
 from sqlalchemy.orm.attributes import flag_modified
 
-from zou.app import db
 from zou.app.models.person import Person
 from zou.app.services import tasks_service
 
@@ -57,23 +56,22 @@ class CarbonResourcesTestCase(ApiDBTestCase):
             ("US", "United States", 95.0, 58.0),
         ]
         for code, name, rendering, workbench in factors_data:
-            factor = CarbonFactor(
+            CarbonFactor.create_no_commit(
                 country_code=code,
                 country_name=name,
                 rendering_co2e=rendering,
                 workbench_co2e=workbench,
             )
-            db.session.add(factor)
-        db.session.commit()
+        CarbonFactor.commit()
 
     def _set_person_country(self, person_id, country_code):
-        person = Person.query.get(person_id)
+        person = Person.get(person_id)
         if person:
             if person.data is None:
                 person.data = {}
             person.data["country"] = country_code
             flag_modified(person, "data")
-            db.session.commit()
+            Person.commit()
 
 
 class CarbonFactorsResourceTestCase(CarbonResourcesTestCase):
@@ -114,7 +112,7 @@ class CarbonFactorsResourceTestCase(CarbonResourcesTestCase):
 
         self.assertEqual(response["country_code"], "JP")
         self.assertEqual(response["country_name"], "Japan")
-        factor = CarbonFactor.query.filter_by(country_code="JP").first()
+        factor = CarbonFactor.get_by(country_code="JP")
         self.assertIsNotNone(factor)
 
     def test_update_factor(self):
