@@ -25,12 +25,27 @@
 
       <view-tabs v-model="activeTab" breakdown-label="Production breakdown" />
 
-      <div v-if="activeTab === 'matrix'" class="matrix-view table-scroll">
+      <div class="entity-filters">
+        <button
+          :class="{ active: entityFilter === 'Shot' }"
+          @click="entityFilter = 'Shot'"
+        >
+          Shots
+        </button>
+        <button
+          :class="{ active: entityFilter === 'Asset' }"
+          @click="entityFilter = 'Asset'"
+        >
+          Assets
+        </button>
+      </div>
+
+      <div v-if="activeTab === 'matrix'" ref="tableScrollRef" class="matrix-view table-scroll">
         <table class="matrix-table">
           <thead>
             <tr>
-              <th>PRODUCTIONS</th>
-              <th style="text-align: center">ALL STEPS</th>
+              <th class="col-name">PRODUCTIONS</th>
+              <th class="col-total" style="text-align: center">ALL STEPS</th>
               <th
                 v-for="tt in taskTypes"
                 :key="tt"
@@ -42,8 +57,8 @@
           </thead>
           <tbody>
             <tr class="total-row">
-              <td>All Productions</td>
-              <td>
+              <td class="col-name">All Productions</td>
+              <td class="col-total">
                 {{ formatValue(data.total_co2_kg) }}
               </td>
               <td
@@ -55,8 +70,8 @@
               </td>
             </tr>
             <tr v-for="prod in productions" :key="prod.name">
-              <td>{{ prod.name }}</td>
-              <td>
+              <td class="col-name">{{ prod.name }}</td>
+              <td class="col-total">
                 {{ formatValue(prod.total) }}
               </td>
               <td
@@ -82,14 +97,14 @@
         <table class="breakdown-table">
           <thead>
             <tr>
-              <th>PRODUCTION</th>
+              <th class="col-name">PRODUCTION</th>
               <th>EMISSION IMPACT</th>
               <th>VALUE</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="prod in productions" :key="prod.name">
-              <td>{{ prod.name }}</td>
+              <td class="col-name">{{ prod.name }}</td>
               <td class="bar-cell">
                 <div class="bar-track">
                   <div
@@ -102,7 +117,7 @@
                 </div>
               </td>
               <td class="value-cell">
-                <span class="kg">{{ formatValue(prod.total) }} kg</span>
+                <span class="kg">{{ formatValue(prod.total) }} {{ unitLabel }}</span>
                 <span class="percent"
                   >{{ getPercent(prod.total, data.total_co2_kg) }}%</span
                 >
@@ -121,6 +136,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useMainStore } from '../stores/main'
 import { useCarbon } from '../composables/useCarbon'
+import { useDragScroll } from '../composables/useDragScroll'
 import FootprintHeader from './FootprintHeader.vue'
 import ViewTabs from './ViewTabs.vue'
 import StatCards from './StatCards.vue'
@@ -144,6 +160,10 @@ const {
   taskTypeCellStyle
 } = useCarbon()
 
+const tableScrollRef = ref(null)
+useDragScroll(tableScrollRef)
+
+const entityFilter = ref('Shot')
 const loading = ref(true)
 const error = ref(null)
 const data = ref({
@@ -156,15 +176,31 @@ const data = ref({
 
 const allTaskTypes = computed(() => {
   if (store.taskTypes.length > 0) {
-    return store.taskTypes.map((tt) => tt.name).sort()
+    return [...store.taskTypes]
+      .sort((a, b) => {
+        if (a.for_entity !== b.for_entity) {
+          return (a.for_entity || '').localeCompare(b.for_entity || '')
+        }
+        return (a.priority || 0) - (b.priority || 0)
+      })
+      .map((tt) => tt.name)
   }
   const types = new Set()
   data.value.details.forEach((item) => types.add(item.task_type_name))
-  return Array.from(types).sort()
+  return Array.from(types)
+})
+
+const taskTypeEntityMap = computed(() => {
+  const map = {}
+  store.taskTypes.forEach((tt) => {
+    map[tt.name] = tt.for_entity
+  })
+  return map
 })
 
 const taskTypes = computed(() => {
   return allTaskTypes.value.filter((tt) => {
+    if (taskTypeEntityMap.value[tt] !== entityFilter.value) return false
     return productions.value.some((prod) => prod.taskTypes[tt] > 0)
   })
 })
@@ -209,7 +245,10 @@ const weeklyAverage = computed(() => {
 
 const maxEmission = computed(() => {
   if (productions.value.length === 0) return 1
-  return Math.max(...productions.value.map((p) => p.total))
+  const allValues = productions.value.flatMap((p) =>
+    Object.values(p.taskTypes)
+  )
+  return Math.max(...allValues, 1)
 })
 
 const getTaskTypeTotal = (taskTypeName) => {
@@ -248,10 +287,35 @@ onMounted(() => {
 .carbon-tracking {
   background: #36393f;
   color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   padding: 1.5rem;
+}
+
+.entity-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.entity-filters button {
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.entity-filters button.active {
+  background: #00aa3c;
+  border-color: #00aa3c;
+  color: #fff;
 }
 
 .loading,
@@ -266,16 +330,22 @@ onMounted(() => {
 }
 
 .table-scroll {
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.breakdown-view {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .matrix-table {
-  border: 1px solid #202225;
-  border-collapse: collapse;
-  border-radius: 6px;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.875rem;
   min-width: max-content;
-  overflow: hidden;
   width: 100%;
 }
 
@@ -292,8 +362,11 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.05em;
   padding: 0.75rem;
+  position: sticky;
   text-align: left;
   text-transform: uppercase;
+  top: 0;
+  z-index: 2;
 }
 
 .matrix-table td {
@@ -302,9 +375,33 @@ onMounted(() => {
   text-align: center;
 }
 
-.matrix-table td:first-child {
+.matrix-table .col-name {
   color: #e0e0e0;
+  left: 0;
+  position: sticky;
   text-align: left;
+  width: 200px;
+  z-index: 1;
+}
+
+.matrix-table th.col-name {
+  z-index: 3;
+}
+
+.matrix-table tbody tr:nth-child(odd) .col-name {
+  background: #46494f;
+}
+
+.matrix-table tbody tr:nth-child(even) .col-name {
+  background: #36393f;
+}
+
+.matrix-table .total-row .col-name {
+  background: #4f525a;
+}
+
+.matrix-table .col-total {
+  width: 120px;
 }
 
 .matrix-table tbody tr:nth-child(odd) {
@@ -319,7 +416,7 @@ onMounted(() => {
   background: #4f525a !important;
 }
 
-.matrix-table .total-row td:first-child {
+.matrix-table .total-row .col-name {
   font-weight: 600;
 }
 
@@ -366,9 +463,9 @@ onMounted(() => {
   background: #36393f;
 }
 
-.breakdown-table td:first-child {
+.breakdown-table .col-name {
   font-weight: 500;
-  width: 150px;
+  width: 200px;
 }
 
 .bar-cell {
