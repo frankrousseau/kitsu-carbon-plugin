@@ -191,7 +191,7 @@ defineEmits(['close'])
   background: var(--accent-green);
   border-radius: 8px;
   color: #fff;
-  display: none;
+  display: flex;
   font-size: 0.9375rem;
   font-weight: 600;
   gap: 0.5rem;
