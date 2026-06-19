@@ -1,7 +1,7 @@
 id = "carbon"
 name = "Carbon Tracking"
 description = "Carbon footprint of your productions."
-version = "0.2.1"
+version = "0.2.2"
 maintainer = "CGWire <contact@cg-wire.com>"
 website = "cg-wire.com/kitsu"
 license = "AGPL-3.0-only"
