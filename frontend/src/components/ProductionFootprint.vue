@@ -244,7 +244,11 @@ const allTaskTypes = computed(() => {
     store.taskTypes.forEach((tt) => {
       taskTypeMap[tt.id] = tt.name
     })
-    return prod.task_types.map((id) => taskTypeMap[id]).filter(Boolean)
+    const priority = prod.task_types_priority || {}
+    return [...prod.task_types]
+      .sort((a, b) => (priority[a] || 0) - (priority[b] || 0))
+      .map((id) => taskTypeMap[id])
+      .filter(Boolean)
   }
   if (store.taskTypes.length > 0) {
     return store.taskTypes.map((tt) => tt.name)
