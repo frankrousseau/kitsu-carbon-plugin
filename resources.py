@@ -1,5 +1,5 @@
 from flask import request
-from flask_restful import Resource
+from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 
 from zou.app.mixin import ArgsMixin
@@ -10,7 +10,7 @@ from .models import CarbonFactor
 from . import services
 
 
-class CarbonFactorsResource(Resource):
+class CarbonFactorsResource(MethodView):
 
     @jwt_required()
     def get(self):
@@ -135,7 +135,7 @@ class CarbonFactorsResource(Resource):
         return None
 
 
-class CarbonFactorResource(Resource):
+class CarbonFactorResource(MethodView):
 
     @jwt_required()
     def get(self, country_code):
@@ -182,7 +182,7 @@ class CarbonFactorResource(Resource):
         return factor.present()
 
 
-class StudioFootprintResource(Resource):
+class StudioFootprintResource(MethodView):
 
     @jwt_required()
     def get(self):
@@ -258,7 +258,7 @@ class StudioFootprintResource(Resource):
         }
 
 
-class ProductionSequenceFootprintResource(Resource, ArgsMixin):
+class ProductionSequenceFootprintResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, project_id):
@@ -354,7 +354,7 @@ class ProductionSequenceFootprintResource(Resource, ArgsMixin):
         }
 
 
-class ProductionEpisodeFootprintResource(Resource, ArgsMixin):
+class ProductionEpisodeFootprintResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, project_id):
@@ -450,7 +450,7 @@ class ProductionEpisodeFootprintResource(Resource, ArgsMixin):
         }
 
 
-class ProductionAssetFootprintResource(Resource, ArgsMixin):
+class ProductionAssetFootprintResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, project_id):
@@ -546,7 +546,7 @@ class ProductionAssetFootprintResource(Resource, ArgsMixin):
         }
 
 
-class ProductionTaskTypeFootprintResource(Resource, ArgsMixin):
+class ProductionTaskTypeFootprintResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, project_id):
@@ -622,7 +622,7 @@ class ProductionTaskTypeFootprintResource(Resource, ArgsMixin):
         }
 
 
-class ProductionFootprintSummaryResource(Resource, ArgsMixin):
+class ProductionFootprintSummaryResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, project_id):

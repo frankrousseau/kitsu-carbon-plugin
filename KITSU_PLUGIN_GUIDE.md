@@ -10,7 +10,7 @@ plugin-name/
 ├── __init__.py            # Routes and lifecycle hooks
 ├── models.py              # SQLAlchemy models
 ├── services.py            # Business logic
-├── resources.py           # Flask-RESTful API endpoints
+├── resources.py           # Flask MethodView API endpoints
 ├── migrations/            # Alembic database migrations
 └── frontend/              # Vue 3 frontend (optional)
     ├── package.json
@@ -79,7 +79,7 @@ Use SQLAlchemy models. Table names must be prefixed with `plugin_<plugin_id>_` t
 
 ### Resources (`resources.py`)
 
-Use Flask-RESTful `Resource` classes. Available Zou models for querying:
+Use Flask `MethodView` classes. Available Zou models for querying:
 
 - `TimeSpent` — work time entries
 - `Task` — tasks with entity and task_type references
